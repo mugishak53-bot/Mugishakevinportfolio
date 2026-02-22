@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>INES Study Timer – Focus Tracker</title>
+
+  <style>
+    /* ---- Variables ---- */
+    :root {
+      --bg: #0d0d0d;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --green: #00e676;
+      --red: #ff5252;
+      --yellow: #ffd740;
+      --text: #e8e8e8;
+      --muted: #777;
+      --radius: 12px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 60px;
+    }
+
+    .app-title {
+      font-size: 1.5rem;
+      color: var(--green);
+      margin-bottom: 4px;
+      letter-spacing: 2px;
+    }
+
+    .app-sub {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    /* ---- Subject Input ---- */
+    .subject-wrap {
+      width: 100%;
+      max-width: 480px;
+      margin-bottom: 24px;
+    }
+
+    .subject-wrap label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .subject-wrap input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .subject-wrap input:focus {
+      border-color: var(--green);
+    }
+
+    /* ---- Timer Card ---- */
+    .timer-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    /* Mode label (Focus / Break) */
+    .mode-badge {
+      display: inline-block;
+      padding: 4px 16px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 24px;
+      border: 1.5px solid var(--green);
+      color: var(--green);
+      transition: all 0.3s;
+    }
+
+    .mode-badge.break {
+      border-color: var(--yellow);
+      color: var(--yellow);
+    }
+
+    /* Big countdown clock */
+    .clock {
+      font-size: 5.5rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      margin-bottom: 12px;
+      /* color changes based on mode */
+      color: var(--green);
+      transition: color 0.5s;
+      line-height: 1;
+    }
+
+    .clock.break-mode {
+      color: var(--yellow);
+    }
+
+    .clock.warning {
+      color: var(--red);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .session-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+
+    /* Round selector buttons */
+    .duration-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .duration-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      padding: 7px 16px;
+      border-radius: 99px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .duration-btn:hover,
+    .duration-btn.active {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(0,230,118,0.08);
+    }
+
+    /* Control buttons */
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .ctrl-btn {
+      padding: 12px 28px;
+      border-radius: var(--radius);
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 2px solid;
+      transition: all 0.25s;
+      letter-spacing: 1px;
+    }
+
+    .ctrl-btn.start {
+      background: var(--green);
+      border-color: var(--green);
+      color: #000;
+    }
+
+    .ctrl-btn.start:hover {
+      background: transparent;
+      color: var(--green);
+    }
+
+    .ctrl-btn.pause {
+      background: transparent;
+      border-color: var(--yellow);
+      color: var(--yellow);
+    }
+
+    .ctrl-btn.pause:hover {
+      background: var(--yellow);
+      color: #000;
+    }
+
+    .ctrl-btn.reset {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--muted);
+    }
+
+    .ctrl-btn.reset:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* ---- Session Log ---- */
+    .log-section {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .log-section h2 {
+      font-size: 0.82rem;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+      border-left: 3px solid var(--green);
+      padding-left: 10px;
+    }
+
+    .log-empty {
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .log-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .log-subject {
+      color: var(--text);
+    }
+
+    .log-time {
+      color: var(--green);
+      font-size: 0.78rem;
+    }
+
+    /* Total stats bar */
+    .stats-bar {
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .stat-item span {
+      display: block;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .clock { font-size: 4rem; }
+      .timer-card { padding: 28px 20px; }
+      .ctrl-btn { padding: 10px 18px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-title">⏱ STUDY TIMER</div>
+  <p class="app-sub">Focus tracker for INES students — built by Mugisha Kevin</p>
+
+  <!-- Subject input -->
+  <div class="subject-wrap">
+    <label>What are you studying?</label>
+    <input type="text" id="subjectInput" placeholder="e.g. Advanced Web Design, Algorithms..." maxlength="50"/>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-value" id="totalSessions">0</span>
+      <span class="stat-label">Sessions</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="totalMinutes">0</span>
+      <span class="stat-label">Min Studied</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="totalBreaks">0</span>
+      <span class="stat-label">Breaks</span>
+    </div>
+  </div>
+
+  <!-- Timer Card -->
+  <div class="timer-card">
+    <div class="mode-badge" id="modeBadge">Focus Mode</div>
+
+    <div class="clock" id="clock">25:00</div>
+    <div class="session-label" id="sessionLabel">Select a duration and press Start</div>
+
+    <!-- Duration presets -->
+    <div class="duration-row">
+      <button class="duration-btn active" data-minutes="25">25 min</button>
+      <button class="duration-btn" data-minutes="45">45 min</button>
+      <button class="duration-btn" data-minutes="60">60 min</button>
+      <button class="duration-btn" data-minutes="5" data-break="true">5 min break</button>
+    </div>
+
+    <!-- Start / Pause / Reset -->
+    <div class="controls">
+      <button class="ctrl-btn start" id="startBtn">▶ START</button>
+      <button class="ctrl-btn pause" id="pauseBtn" style="display:none;">⏸ PAUSE</button>
+      <button class="ctrl-btn reset" id="resetBtn">↺ RESET</button>
+    </div>
+  </div>
+
+  <!-- Session Log -->
+  <div class="log-section">
+    <h2>Session History</h2>
+    <div id="logContainer">
+      <p class="log-empty">No sessions yet. Start studying! 📚</p>
+    </div>
+  </div>
+
+  <script>
+    // ---- State variables ----
+    var totalSeconds = 25 * 60;  // default 25 minutes
+    var secondsLeft = totalSeconds;
+    var isRunning = false;
+    var isBreak = false;
+    var timer = null;
+
+    // Stats
+    var sessionsCount = 0;
+    var minutesStudied = 0;
+    var breaksCount = 0;
+
+    // Log array (stores session history)
+    var sessionLog = [];
+
+    // DOM elements I need
+    var clock = document.getElementById('clock');
+    var modeBadge = document.getElementById('modeBadge');
+    var sessionLabel = document.getElementById('sessionLabel');
+    var startBtn = document.getElementById('startBtn');
+    var pauseBtn = document.getElementById('pauseBtn');
+    var resetBtn = document.getElementById('resetBtn');
+    var subjectInput = document.getElementById('subjectInput');
+    var logContainer = document.getElementById('logContainer');
+
+    // Stats displays
+    var totalSessionsEl = document.getElementById('totalSessions');
+    var totalMinutesEl = document.getElementById('totalMinutes');
+    var totalBreaksEl = document.getElementById('totalBreaks');
+
+
+    // ---- Helper: format seconds into MM:SS ----
+    function formatTime(secs) {
+      var minutes = Math.floor(secs / 60);
+      var seconds = secs % 60;
+      // Pad with 0 if single digit
+      return (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+    }
+
+
+    // ---- Helper: update the clock display ----
+    function updateClock() {
+      clock.textContent = formatTime(secondsLeft);
+
+      // Turn red when less than 1 minute left
+      if (secondsLeft <= 60 && secondsLeft > 0) {
+        clock.classList.add('warning');
+      } else {
+        clock.classList.remove('warning');
+      }
+    }
+
+
+    // ---- Helper: update stats bar ----
+    function updateStats() {
+      totalSessionsEl.textContent = sessionsCount;
+      totalMinutesEl.textContent = minutesStudied;
+      totalBreaksEl.textContent = breaksCount;
+    }
+
+
+    // ---- Helper: add entry to session log ----
+    function addToLog(subject, duration, type) {
+      // Get current time
+      var now = new Date();
+      var timeStr = now.getHours() + ':' + (now.getMinutes() < 10 ? '0' : '') + now.getMinutes();
+
+      var entry = {
+        subject: subject || (type === 'break' ? 'Break time' : 'Unnamed session'),
+        duration: duration,
+        time: timeStr,
+        type: type
+      };
+      sessionLog.unshift(entry); // add to front of array
+
+      // Rebuild the log display
+      renderLog();
+    }
+
+
+    // ---- Build the session log HTML from the array ----
+    function renderLog() {
+      if (sessionLog.length === 0) {
+        logContainer.innerHTML = '<p class="log-empty">No sessions yet. Start studying! 📚</p>';
+        return;
+      }
+
+      var list = document.createElement('div');
+      list.className = 'log-list';
+
+      for (var i = 0; i < sessionLog.length; i++) {
+        var item = document.createElement('div');
+        item.className = 'log-item';
+
+        var icon = sessionLog[i].type === 'break' ? '☕' : '📖';
+
+        item.innerHTML =
+          '<span class="log-subject">' + icon + ' ' + sessionLog[i].subject + '</span>' +
+          '<span class="log-time">' + sessionLog[i].duration + ' min — ' + sessionLog[i].time + '</span>';
+
+        list.appendChild(item);
+      }
+
+      logContainer.innerHTML = '';
+      logContainer.appendChild(list);
+    }
+
+
+    // ---- Called every second when timer is running ----
+    function tick() {
+      if (secondsLeft <= 0) {
+        clearInterval(timer);
+        isRunning = false;
+
+        // Session finished — log it
+        var durationMins = Math.round(totalSeconds / 60);
+        var subject = subjectInput.value.trim();
+
+        if (isBreak) {
+          breaksCount++;
+          addToLog('Break', durationMins, 'break');
+          modeBadge.textContent = 'Break Done!';
+          sessionLabel.textContent = '✅ Break over — ready to focus again?';
+        } else {
+          sessionsCount++;
+          minutesStudied += durationMins;
+          addToLog(subject, durationMins, 'study');
+          sessionLabel.textContent = '🎉 Session complete! Take a break.';
+        }
+
+        updateStats();
+        startBtn.style.display = 'inline-block';
+        pauseBtn.style.display = 'none';
+        return;
+      }
+
+      secondsLeft--;
+      updateClock();
+    }
+
+
+    // ---- Duration selector buttons ----
+    var durationBtns = document.querySelectorAll('.duration-btn');
+
+    durationBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        // Don't allow changing duration mid-run
+        if (isRunning) return;
+
+        // Remove active from all, add to clicked
+        durationBtns.forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+
+        var minutes = parseInt(btn.getAttribute('data-minutes'));
+        var isBreakBtn = btn.getAttribute('data-break') === 'true';
+
+        isBreak = isBreakBtn;
+        totalSeconds = minutes * 60;
+        secondsLeft = totalSeconds;
+        updateClock();
+
+        // Update the badge and label
+        if (isBreak) {
+          modeBadge.textContent = 'Break Mode';
+          modeBadge.className = 'mode-badge break';
+          clock.className = 'clock break-mode';
+          sessionLabel.textContent = 'Short break — relax your eyes 👀';
+        } else {
+          modeBadge.textContent = 'Focus Mode';
+          modeBadge.className = 'mode-badge';
+          clock.className = 'clock';
+          sessionLabel.textContent = 'Select a duration and press Start';
+        }
+      });
+    });
+
+
+    // ---- START button ----
+    startBtn.addEventListener('click', function() {
+      if (isRunning) return;
+
+      // Validate: need a subject if not a break
+      if (!isBreak && subjectInput.value.trim() === '') {
+        subjectInput.focus();
+        subjectInput.style.borderColor = '#ff5252';
+        sessionLabel.textContent = '⚠️ Please enter what you are studying.';
+        return;
+      }
+
+      subjectInput.style.borderColor = '';
+      isRunning = true;
+      sessionLabel.textContent = isBreak ? '☕ Resting...' : '🔥 Stay focused, Kevin!';
+
+      timer = setInterval(tick, 1000);
+
+      startBtn.style.display = 'none';
+      pauseBtn.style.display = 'inline-block';
+    });
+
+
+    // ---- PAUSE button ----
+    pauseBtn.addEventListener('click', function() {
+      if (!isRunning) return;
+      clearInterval(timer);
+      isRunning = false;
+      sessionLabel.textContent = '⏸ Paused — click Start to continue';
+      startBtn.style.display = 'inline-block';
+      pauseBtn.style.display = 'none';
+    });
+
+
+    // ---- RESET button ----
+    resetBtn.addEventListener('click', function() {
+      clearInterval(timer);
+      isRunning = false;
+      secondsLeft = totalSeconds;
+      updateClock();
+      sessionLabel.textContent = 'Select a duration and press Start';
+      startBtn.style.display = 'inline-block';
+      pauseBtn.style.display = 'none';
+      clock.classList.remove('warning');
+    });
+
+
+    // Run once so the clock shows correctly on load
+    updateClock();
+  </script>
+
+</body>
+</html>

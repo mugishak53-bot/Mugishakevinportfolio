@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GPA Calculator – Mugisha Kevin</title>
+
+  <style>
+    /* ============================================
+       GPA CALCULATOR – Full App
+       Built by Mugisha Kevin | INES-Ruhengeri
+       ============================================ */
+
+    :root {
+      --bg: #0d0d0d;
+      --bg-alt: #141414;
+      --surface: #1a1a1a;
+      --surface2: #222222;
+      --border: #2a2a2a;
+      --green: #00e676;
+      --green-dim: rgba(0, 230, 118, 0.1);
+      --red: #ff5252;
+      --yellow: #ffd740;
+      --blue: #448aff;
+      --text: #e8e8e8;
+      --muted: #777;
+      --radius: 10px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      padding: 0 0 80px;
+    }
+
+    /* ---- TOP BAR ---- */
+    .topbar {
+      background: var(--bg-alt);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar-brand {
+      font-family: 'Courier New', monospace;
+      font-size: 1.1rem;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .topbar-brand span {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 400;
+      margin-left: 10px;
+    }
+
+    /* Semester tabs */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      padding: 7px 16px;
+      border-radius: 99px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover { border-color: var(--green); color: var(--green); }
+    .tab-btn.active {
+      background: var(--green);
+      border-color: var(--green);
+      color: #000;
+      font-weight: 700;
+    }
+
+    /* ---- MAIN LAYOUT ---- */
+    .main-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    /* Left column — course table */
+    .left-col {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    /* Right column — results */
+    .right-col {
+      width: 300px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 80px;
+    }
+
+    /* ---- SECTION HEADING ---- */
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .section-head h2 {
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      color: var(--green);
+      letter-spacing: 1px;
+    }
+
+    /* Semester name input */
+    .semester-name-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 14px;
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.88rem;
+      outline: none;
+      width: 100%;
+      margin-bottom: 20px;
+      transition: border-color 0.2s;
+    }
+    .semester-name-input:focus { border-color: var(--green); }
+
+    /* ---- COURSE TABLE ---- */
+    .table-header {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 0.6fr 40px;
+      gap: 8px;
+      padding: 0 4px 10px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Each course row */
+    .course-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 0.6fr 40px;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 4px;
+      border-bottom: 1px solid var(--border);
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(-6px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Inputs inside each row */
+    .course-row input,
+    .course-row select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 10px;
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .course-row input:focus,
+    .course-row select:focus { border-color: var(--green); }
+
+    /* Grade auto-display (read only) */
+    .grade-display {
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 9px 6px;
+      border-radius: 6px;
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid var(--border);
+      min-width: 48px;
+    }
+
+    /* Delete row button */
+    .delete-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .delete-btn:hover { color: var(--red); background: rgba(255,82,82,0.1); }
+
+    /* Error highlight */
+    .input-error { border-color: var(--red) !important; }
+
+    /* Add course button */
+    .add-btn {
+      margin-top: 16px;
+      background: transparent;
+      border: 1.5px dashed var(--border);
+      color: var(--muted);
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      width: 100%;
+      padding: 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .add-btn:hover {
+      border-color: var(--green);
+      color: var(--green);
+      background: var(--green-dim);
+    }
+
+    /* Action buttons row */
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 11px 24px;
+      border-radius: var(--radius);
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 2px solid;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-green {
+      background: var(--green);
+      border-color: var(--green);
+      color: #000;
+    }
+    .btn-green:hover { background: transparent; color: var(--green); }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--muted);
+    }
+    .btn-ghost:hover { border-color: var(--red); color: var(--red); }
+
+    .btn-blue {
+      background: transparent;
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+    .btn-blue:hover { background: var(--blue); color: #fff; }
+
+    /* Error message */
+    .error-msg {
+      color: var(--red);
+      font-size: 0.82rem;
+      font-family: 'Courier New', monospace;
+      margin-top: 10px;
+      min-height: 20px;
+    }
+
+    /* ---- RIGHT COLUMN — RESULTS ---- */
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .result-card-head {
+      background: var(--green-dim);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .result-card-body {
+      padding: 20px;
+    }
+
+    /* Big GPA number */
+    .gpa-big {
+      font-family: 'Courier New', monospace;
+      font-size: 4rem;
+      font-weight: 700;
+      color: var(--green);
+      line-height: 1;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    .gpa-scale {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    /* Classification badge */
+    .class-badge {
+      text-align: center;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      border: 1.5px solid var(--green);
+      color: var(--green);
+      background: var(--green-dim);
+    }
+
+    /* GPA progress bar (visual) */
+    .gpa-bar-wrap {
+      margin-bottom: 16px;
+    }
+
+    .gpa-bar-wrap label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .gpa-bar {
+      background: var(--border);
+      height: 8px;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .gpa-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: var(--green);
+      transition: width 0.6s ease;
+      width: 0%;
+    }
+
+    /* Mini stats */
+    .mini-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .mini-stat {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      text-align: center;
+    }
+
+    .mini-stat-val {
+      font-family: 'Courier New', monospace;
+      font-size: 1.2rem;
+      color: var(--text);
+      font-weight: 700;
+      display: block;
+    }
+
+    .mini-stat-lbl {
+      font-size: 0.7rem;
+      color: var(--muted);
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* ---- GRADING SCALE REFERENCE ---- */
+    .scale-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .scale-card-head {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 18px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .scale-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 18px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+    }
+
+    .scale-row:last-child { border-bottom: none; }
+
+    .scale-grade {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      width: 28px;
+    }
+
+    .scale-range { color: var(--muted); font-size: 0.78rem; flex: 1; text-align: center; }
+    .scale-points { font-family: 'Courier New', monospace; color: var(--green); }
+
+    /* ---- CUMULATIVE SECTION ---- */
+    .cumulative-wrap {
+      max-width: 1100px;
+      margin: 0 auto 0;
+      padding: 0 24px 20px;
+    }
+
+    .cumul-head {
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      color: var(--green);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cumul-cards {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .cumul-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      flex: 1;
+      min-width: 140px;
+      text-align: center;
+    }
+
+    .cumul-val {
+      font-family: 'Courier New', monospace;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--green);
+      display: block;
+    }
+
+    .cumul-lbl {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 4px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ---- COURSE BREAKDOWN TABLE ---- */
+    .breakdown-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px 40px;
+    }
+
+    .breakdown-head {
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      color: var(--green);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .breakdown-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--surface2);
+      color: var(--muted);
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .breakdown-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .breakdown-table tr:last-child td { border-bottom: none; }
+    .breakdown-table tr:hover td { background: var(--surface2); }
+
+    .grade-chip {
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 99px;
+    }
+
+    .chip-a { background: rgba(0,230,118,0.15); color: #00e676; }
+    .chip-b { background: rgba(68,138,255,0.15); color: #448aff; }
+    .chip-c { background: rgba(255,215,64,0.15); color: #ffd740; }
+    .chip-d { background: rgba(255,82,82,0.15); color: #ff5252; }
+    .chip-f { background: rgba(255,82,82,0.2); color: #ff5252; }
+
+    .contrib-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .contrib-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 99px;
+    }
+
+    /* Placeholder when no results yet */
+    .no-result {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding: 30px 0;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main-wrap { flex-direction: column; }
+      .right-col { width: 100%; position: static; }
+      .table-header,
+      .course-row {
+        grid-template-columns: 2fr 1fr 1fr 0.6fr 36px;
+        font-size: 0.8rem;
+      }
+      .topbar { padding: 12px 20px; }
+      .gpa-big { font-size: 3rem; }
+    }
+
+    @media (max-width: 520px) {
+      .table-header { display: none; }
+      .course-row {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: 10px;
+        padding: 12px;
+        background: var(--surface2);
+      }
+      .course-row input[placeholder="e.g. Web Design"] { grid-column: 1 / -1; }
+      .delete-btn { grid-column: 2; grid-row: 2; justify-self: end; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      📊 GPA CALCULATOR
+      <span>INES-Ruhengeri | Mugisha Kevin</span>
+    </div>
+    <div class="tabs" id="semesterTabs">
+      <button class="tab-btn active" data-sem="0">Semester 1</button>
+      <button class="tab-btn" data-sem="1">Semester 2</button>
+      <button class="tab-btn" data-sem="2">Semester 3</button>
+      <button class="tab-btn" data-sem="3">Semester 4</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-wrap">
+
+    <!-- LEFT: Course Entry -->
+    <div class="left-col">
+      <div class="section-head">
+        <h2 id="currentSemLabel">📅 SEMESTER 1 COURSES</h2>
+      </div>
+
+      <input
+        type="text"
+        class="semester-name-input"
+        id="semNameInput"
+        placeholder="Semester name (e.g. Year I – Semester 1)"
+      />
+
+      <!-- Table header -->
+      <div class="table-header">
+        <span>Course Name</span>
+        <span>Mark (%)</span>
+        <span>Credits</span>
+        <span>Grade</span>
+        <span></span>
+      </div>
+
+      <!-- Course rows injected here -->
+      <div id="courseTable"></div>
+
+      <button class="add-btn" id="addCourseBtn">＋ Add Course</button>
+      <div class="error-msg" id="errorMsg"></div>
+
+      <div class="action-row">
+        <button class="btn btn-green" id="calcBtn">▶ Calculate GPA</button>
+        <button class="btn btn-blue" id="saveBtn">💾 Save Semester</button>
+        <button class="btn btn-ghost" id="clearBtn">🗑 Clear All</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: Results Panel -->
+    <div class="right-col">
+
+      <!-- GPA Result Card -->
+      <div class="result-card">
+        <div class="result-card-head">📈 GPA Result</div>
+        <div class="result-card-body" id="resultBody">
+          <div class="no-result">Enter courses and<br/>click Calculate</div>
+        </div>
+      </div>
+
+      <!-- Grading Scale Reference -->
+      <div class="scale-card">
+        <div class="scale-card-head">📋 Grading Scale</div>
+        <div class="scale-row"><span class="scale-grade" style="color:#00e676">A</span><span class="scale-range">80 – 100%</span><span class="scale-points">4.0</span></div>
+        <div class="scale-row"><span class="scale-grade" style="color:#00e676">A-</span><span class="scale-range">75 – 79%</span><span class="scale-points">3.7</span></div>
+        <div class="scale-row"><span class="scale-grade" style="color:#448aff">B+</span><span class="scale-range">70 – 74%</span><span class="scale-points">3.3</span></div>
+        <div class="scale-row"><span class="scale-grade" style="color:#448aff">B</span><span class="scale-range">65 – 69%</span><span class="scale-points">3.0</span></div>
+        <div class="scale-row"><span class="scale-grade" style="color:#448aff">B-</span><span class="scale-range">60 – 64%</span><span class="scale-points">2.7</span></div>
+        <div class="scale-row"><span class="scale-grade" style="color:#ffd740">C+</span><span class="scale-range">55 – 59%</span><span class="scale-points">2.3</span></div>
+        <div class="scale-row"><span class="scale-grade" style="color:#ffd740">C</span><span class="scale-range">50 – 54%</span><span class="scale-points">2.0</span></div>
+        <div class="scale-row"><span class="scale-grade" style="color:#ffd740">C-</span><span class="scale-range">45 – 49%</span><span class="scale-points">1.7</span></div>
+        <div class="scale-row"><span class="scale-grade" style="color:#ff5252">D</span><span class="scale-range">40 – 44%</span><span class="scale-points">1.0</span></div>
+        <div class="scale-row"><span class="scale-grade" style="color:#ff5252">F</span><span class="scale-range">0 – 39%</span><span class="scale-points">0.0</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- COURSE BREAKDOWN (shown after calculation) -->
+  <div class="breakdown-wrap" id="breakdownSection" style="display:none;">
+    <div class="breakdown-head">📋 COURSE BREAKDOWN</div>
+    <table class="breakdown-table">
+      <thead>
+        <tr>
+          <th>Course</th>
+          <th>Mark</th>
+          <th>Credits</th>
+          <th>Grade</th>
+          <th>Points</th>
+          <th>Contribution</th>
+        </tr>
+      </thead>
+      <tbody id="breakdownBody"></tbody>
+    </table>
+  </div>
+
+  <!-- CUMULATIVE ACROSS ALL SEMESTERS -->
+  <div class="cumulative-wrap" id="cumulSection" style="display:none;">
+    <div class="cumul-head">🎓 CUMULATIVE GPA (All Saved Semesters)</div>
+    <div class="cumul-cards" id="cumulCards"></div>
+  </div>
+
+
+  <script>
+    // ============================================
+    // DATA + STATE
+    // ============================================
+
+    // Each semester stores: name, courses array, and saved GPA
+    var semesters = [
+      { name: 'Year I – Semester 1', courses: [], savedGPA: null },
+      { name: 'Year I – Semester 2', courses: [], savedGPA: null },
+      { name: 'Year II – Semester 1', courses: [], savedGPA: null },
+      { name: 'Year II – Semester 2', courses: [], savedGPA: null }
+    ];
+
+    var currentSem = 0;  // which tab is active
+
+    // A default empty course object
+    function newCourse() {
+      return { name: '', mark: '', credits: '3' };
+    }
+
+    // Start each semester with 4 blank course rows
+    for (var s = 0; s < semesters.length; s++) {
+      for (var c = 0; c < 4; c++) {
+        semesters[s].courses.push(newCourse());
+      }
+    }
+
+
+    // ============================================
+    // GRADING LOGIC
+    // ============================================
+
+    // Convert percentage mark to letter grade
+    function getGrade(mark) {
+      if (mark >= 80) return 'A';
+      if (mark >= 75) return 'A-';
+      if (mark >= 70) return 'B+';
+      if (mark >= 65) return 'B';
+      if (mark >= 60) return 'B-';
+      if (mark >= 55) return 'C+';
+      if (mark >= 50) return 'C';
+      if (mark >= 45) return 'C-';
+      if (mark >= 40) return 'D';
+      return 'F';
+    }
+
+    // Convert letter grade to GPA points
+    function gradeToPoints(grade) {
+      var map = { 'A': 4.0, 'A-': 3.7, 'B+': 3.3, 'B': 3.0, 'B-': 2.7,
+                  'C+': 2.3, 'C': 2.0, 'C-': 1.7, 'D': 1.0, 'F': 0.0 };
+      return map[grade] !== undefined ? map[grade] : 0.0;
+    }
+
+    // Get chip CSS class for a grade
+    function gradeChip(grade) {
+      if (grade.startsWith('A')) return 'chip-a';
+      if (grade.startsWith('B')) return 'chip-b';
+      if (grade.startsWith('C')) return 'chip-c';
+      if (grade === 'D') return 'chip-d';
+      return 'chip-f';
+    }
+
+    // Get human-readable classification from GPA
+    function getClassification(gpa) {
+      if (gpa >= 3.7) return '🏆 First Class Honours';
+      if (gpa >= 3.3) return '🥈 Upper Second Class';
+      if (gpa >= 3.0) return '📘 Second Class';
+      if (gpa >= 2.7) return '📗 Lower Second Class';
+      if (gpa >= 2.0) return '📙 Pass';
+      if (gpa >= 1.0) return '⚠️ Conditional Pass';
+      return '❌ Fail';
+    }
+
+    // Get color for GPA level
+    function gpaColor(gpa) {
+      if (gpa >= 3.5) return '#00e676';
+      if (gpa >= 2.7) return '#448aff';
+      if (gpa >= 2.0) return '#ffd740';
+      return '#ff5252';
+    }
+
+
+    // ============================================
+    // RENDER COURSE TABLE
+    // ============================================
+
+    function renderTable() {
+      var courses = semesters[currentSem].courses;
+      var table = document.getElementById('courseTable');
+      table.innerHTML = '';
+
+      for (var i = 0; i < courses.length; i++) {
+        (function(index) {
+          var row = document.createElement('div');
+          row.className = 'course-row';
+          row.id = 'row-' + index;
+
+          // Calculate live grade if mark is valid
+          var liveGrade = '';
+          var markVal = parseFloat(courses[index].mark);
+          if (!isNaN(markVal) && markVal >= 0 && markVal <= 100) {
+            liveGrade = getGrade(markVal);
+          }
+
+          row.innerHTML =
+            '<input type="text" placeholder="e.g. Web Design" value="' + escHtml(courses[index].name) + '" data-field="name" data-index="' + index + '" />' +
+            '<input type="number" placeholder="0–100" min="0" max="100" value="' + escHtml(courses[index].mark) + '" data-field="mark" data-index="' + index + '" />' +
+            '<select data-field="credits" data-index="' + index + '">' +
+              '<option value="1"' + (courses[index].credits === '1' ? ' selected' : '') + '>1 cr</option>' +
+              '<option value="2"' + (courses[index].credits === '2' ? ' selected' : '') + '>2 cr</option>' +
+              '<option value="3"' + (courses[index].credits === '3' ? ' selected' : '') + '>3 cr</option>' +
+              '<option value="4"' + (courses[index].credits === '4' ? ' selected' : '') + '>4 cr</option>' +
+              '<option value="5"' + (courses[index].credits === '5' ? ' selected' : '') + '>5 cr</option>' +
+            '</select>' +
+            '<div class="grade-display" id="grade-' + index + '">' + (liveGrade || '—') + '</div>' +
+            '<button class="delete-btn" data-index="' + index + '" title="Remove course">✕</button>';
+
+          table.appendChild(row);
+
+          // Listen for changes on all inputs in this row
+          var inputs = row.querySelectorAll('input, select');
+          inputs.forEach(function(input) {
+            input.addEventListener('input', function() {
+              var field = this.getAttribute('data-field');
+              var idx = parseInt(this.getAttribute('data-index'));
+              semesters[currentSem].courses[idx][field] = this.value;
+
+              // Live grade update when mark changes
+              if (field === 'mark') {
+                var m = parseFloat(this.value);
+                var gradeEl = document.getElementById('grade-' + idx);
+                if (!isNaN(m) && m >= 0 && m <= 100) {
+                  gradeEl.textContent = getGrade(m);
+                  this.classList.remove('input-error');
+                } else {
+                  gradeEl.textContent = '—';
+                }
+              }
+            });
+          });
+
+          // Delete button
+          row.querySelector('.delete-btn').addEventListener('click', function() {
+            var idx = parseInt(this.getAttribute('data-index'));
+            if (semesters[currentSem].courses.length <= 1) {
+              document.getElementById('errorMsg').textContent = 'You need at least one course.';
+              return;
+            }
+            semesters[currentSem].courses.splice(idx, 1);
+            document.getElementById('errorMsg').textContent = '';
+            renderTable();
+          });
+
+        })(i);
+      }
+
+      // Update semester name input
+      document.getElementById('semNameInput').value = semesters[currentSem].name;
+      document.getElementById('currentSemLabel').textContent = '📅 SEMESTER ' + (currentSem + 1) + ' COURSES';
+    }
+
+
+    // ============================================
+    // CALCULATE GPA
+    // ============================================
+
+    function calculateGPA() {
+      var courses = semesters[currentSem].courses;
+      var errorEl = document.getElementById('errorMsg');
+      errorEl.textContent = '';
+
+      // Clear all error highlights first
+      var allInputs = document.querySelectorAll('.course-row input');
+      allInputs.forEach(function(inp) { inp.classList.remove('input-error'); });
+
+      var validCourses = [];
+      var hasError = false;
+
+      for (var i = 0; i < courses.length; i++) {
+        var name = courses[i].name.trim();
+        var mark = parseFloat(courses[i].mark);
+        var credits = parseInt(courses[i].credits);
+
+        // Skip completely empty rows
+        if (name === '' && courses[i].mark === '') continue;
+
+        // Validate name
+        if (name === '') {
+          document.querySelectorAll('[data-field="name"]')[i].classList.add('input-error');
+          errorEl.textContent = 'Row ' + (i + 1) + ': Course name is required.';
+          hasError = true;
+          break;
+        }
+
+        // Validate mark
+        if (isNaN(mark) || mark < 0 || mark > 100) {
+          document.querySelectorAll('[data-field="mark"]')[i].classList.add('input-error');
+          errorEl.textContent = 'Row ' + (i + 1) + ': Mark must be a number between 0 and 100.';
+          hasError = true;
+          break;
+        }
+
+        var grade = getGrade(mark);
+        var points = gradeToPoints(grade);
+
+        validCourses.push({
+          name: name,
+          mark: mark,
+          credits: credits,
+          grade: grade,
+          points: points,
+          weightedPoints: points * credits
+        });
+      }
+
+      if (hasError) return;
+
+      if (validCourses.length === 0) {
+        errorEl.textContent = 'Please fill in at least one course with a name and mark.';
+        return;
+      }
+
+      // Calculate weighted GPA
+      var totalCredits = 0;
+      var totalWeighted = 0;
+      var totalMark = 0;
+      var failCount = 0;
+
+      for (var j = 0; j < validCourses.length; j++) {
+        totalCredits += validCourses[j].credits;
+        totalWeighted += validCourses[j].weightedPoints;
+        totalMark += validCourses[j].mark;
+        if (validCourses[j].grade === 'F') failCount++;
+      }
+
+      var gpa = totalWeighted / totalCredits;
+      var avgMark = totalMark / validCourses.length;
+      var classification = getClassification(gpa);
+      var color = gpaColor(gpa);
+      var barWidth = (gpa / 4.0) * 100;
+
+      // ---- Show result card ----
+      var resultBody = document.getElementById('resultBody');
+      resultBody.innerHTML =
+        '<div class="gpa-big" style="color:' + color + '">' + gpa.toFixed(2) + '</div>' +
+        '<div class="gpa-scale">out of 4.00</div>' +
+        '<div class="class-badge" style="border-color:' + color + ';color:' + color + ';background:rgba(0,0,0,0.2)">' + classification + '</div>' +
+        '<div class="gpa-bar-wrap">' +
+          '<label><span>GPA Progress</span><span>' + gpa.toFixed(2) + ' / 4.00</span></label>' +
+          '<div class="gpa-bar"><div class="gpa-bar-fill" id="gpaBarFill" style="background:' + color + '"></div></div>' +
+        '</div>' +
+        '<div class="mini-stats">' +
+          '<div class="mini-stat"><span class="mini-stat-val">' + validCourses.length + '</span><span class="mini-stat-lbl">Courses</span></div>' +
+          '<div class="mini-stat"><span class="mini-stat-val">' + totalCredits + '</span><span class="mini-stat-lbl">Credits</span></div>' +
+          '<div class="mini-stat"><span class="mini-stat-val">' + avgMark.toFixed(1) + '%</span><span class="mini-stat-lbl">Avg Mark</span></div>' +
+          '<div class="mini-stat"><span class="mini-stat-val" style="color:' + (failCount > 0 ? '#ff5252' : '#00e676') + '">' + failCount + '</span><span class="mini-stat-lbl">Failed</span></div>' +
+        '</div>';
+
+      // Animate the bar after a tiny delay
+      setTimeout(function() {
+        var fill = document.getElementById('gpaBarFill');
+        if (fill) fill.style.width = barWidth + '%';
+      }, 100);
+
+      // ---- Show breakdown table ----
+      var breakdownSection = document.getElementById('breakdownSection');
+      var breakdownBody = document.getElementById('breakdownBody');
+      breakdownSection.style.display = 'block';
+      breakdownBody.innerHTML = '';
+
+      for (var k = 0; k < validCourses.length; k++) {
+        var c = validCourses[k];
+        var contribPercent = ((c.weightedPoints / totalWeighted) * 100).toFixed(1);
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + escHtml(c.name) + '</td>' +
+          '<td>' + c.mark.toFixed(1) + '%</td>' +
+          '<td>' + c.credits + '</td>' +
+          '<td><span class="grade-chip ' + gradeChip(c.grade) + '">' + c.grade + '</span></td>' +
+          '<td style="color:var(--green);font-family:Courier New,monospace">' + c.points.toFixed(1) + '</td>' +
+          '<td style="min-width:100px">' +
+            contribPercent + '%' +
+            '<div class="contrib-bar"><div class="contrib-fill" style="width:' + contribPercent + '%"></div></div>' +
+          '</td>';
+        breakdownBody.appendChild(tr);
+      }
+
+      // Add totals row
+      var totalRow = document.createElement('tr');
+      totalRow.innerHTML =
+        '<td style="font-weight:700;color:var(--text)">TOTAL</td>' +
+        '<td style="color:var(--muted)">—</td>' +
+        '<td style="font-weight:700;color:var(--green)">' + totalCredits + '</td>' +
+        '<td>—</td>' +
+        '<td style="font-weight:700;color:var(--green);font-family:Courier New,monospace">' + gpa.toFixed(2) + ' GPA</td>' +
+        '<td>—</td>';
+      breakdownBody.appendChild(totalRow);
+
+      // Store result on semester for cumulative
+      semesters[currentSem].savedGPA = { gpa: gpa, credits: totalCredits, courses: validCourses.length };
+    }
+
+
+    // ============================================
+    // SAVE SEMESTER — updates cumulative view
+    // ============================================
+
+    function saveSemester() {
+      // Run calculate first so we have fresh data
+      calculateGPA();
+
+      if (!semesters[currentSem].savedGPA) return;
+
+      // Update cumulative display
+      var cumulSection = document.getElementById('cumulSection');
+      var cumulCards = document.getElementById('cumulCards');
+      cumulSection.style.display = 'block';
+      cumulCards.innerHTML = '';
+
+      var totalWeightedGPA = 0;
+      var totalCreditsSaved = 0;
+      var savedSemesters = 0;
+
+      for (var i = 0; i < semesters.length; i++) {
+        if (!semesters[i].savedGPA) continue;
+
+        savedSemesters++;
+        var sg = semesters[i].savedGPA;
+        totalWeightedGPA += sg.gpa * sg.credits;
+        totalCreditsSaved += sg.credits;
+
+        var color = gpaColor(sg.gpa);
+        var card = document.createElement('div');
+        card.className = 'cumul-card';
+        card.innerHTML =
+          '<span class="cumul-val" style="color:' + color + '">' + sg.gpa.toFixed(2) + '</span>' +
+          '<span class="cumul-lbl">Semester ' + (i + 1) + '<br>' + semesters[i].name + '</span>';
+        cumulCards.appendChild(card);
+      }
+
+      // Overall CGPA card
+      if (totalCreditsSaved > 0) {
+        var cgpa = totalWeightedGPA / totalCreditsSaved;
+        var cgpaColor = gpaColor(cgpa);
+        var cgpaCard = document.createElement('div');
+        cgpaCard.className = 'cumul-card';
+        cgpaCard.style.border = '1px solid ' + cgpaColor;
+        cgpaCard.innerHTML =
+          '<span class="cumul-val" style="color:' + cgpaColor + '">' + cgpa.toFixed(2) + '</span>' +
+          '<span class="cumul-lbl">CGPA<br>' + getClassification(cgpa) + '</span>';
+        cumulCards.appendChild(cgpaCard);
+      }
+    }
+
+
+    // ============================================
+    // CLEAR ALL COURSES
+    // ============================================
+
+    function clearAll() {
+      if (!confirm('Clear all courses in this semester?')) return;
+      semesters[currentSem].courses = [];
+      for (var i = 0; i < 4; i++) {
+        semesters[currentSem].courses.push(newCourse());
+      }
+      semesters[currentSem].savedGPA = null;
+      document.getElementById('resultBody').innerHTML = '<div class="no-result">Enter courses and<br/>click Calculate</div>';
+      document.getElementById('breakdownSection').style.display = 'none';
+      document.getElementById('errorMsg').textContent = '';
+      renderTable();
+    }
+
+
+    // ============================================
+    // UTILITY: Escape HTML to prevent XSS
+    // ============================================
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
+
+    // Semester tabs
+    var tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        tabBtns.forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentSem = parseInt(btn.getAttribute('data-sem'));
+
+        // Reset result panel when switching tabs
+        document.getElementById('resultBody').innerHTML = '<div class="no-result">Enter courses and<br/>click Calculate</div>';
+        document.getElementById('breakdownSection').style.display = 'none';
+        document.getElementById('errorMsg').textContent = '';
+        renderTable();
+      });
+    });
+
+    // Semester name input
+    document.getElementById('semNameInput').addEventListener('input', function() {
+      semesters[currentSem].name = this.value;
+    });
+
+    // Add course
+    document.getElementById('addCourseBtn').addEventListener('click', function() {
+      if (semesters[currentSem].courses.length >= 15) {
+        document.getElementById('errorMsg').textContent = 'Maximum 15 courses per semester.';
+        return;
+      }
+      semesters[currentSem].courses.push(newCourse());
+      document.getElementById('errorMsg').textContent = '';
+      renderTable();
+      // Scroll to the new row
+      var rows = document.querySelectorAll('.course-row');
+      if (rows.length > 0) {
+        rows[rows.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+
+    // Calculate
+    document.getElementById('calcBtn').addEventListener('click', calculateGPA);
+
+    // Save semester
+    document.getElementById('saveBtn').addEventListener('click', saveSemester);
+
+    // Clear
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+
+    // ============================================
+    // INIT — render the first semester on load
+    // ============================================
+    renderTable();
+  </script>
+
+</body>
+</html>

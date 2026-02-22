@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Musanze Weather Mood Board</title>
+
+  <style>
+    /* I used CSS variables so I can change the whole theme easily */
+    :root {
+      --sky: #1a1a2e;
+      --card: #16213e;
+      --accent: #0f3460;
+      --green: #00e676;
+      --text: #e8e8e8;
+      --muted: #888;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--sky);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 40px 16px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      color: var(--green);
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 36px;
+      text-align: center;
+    }
+
+    /* The main mood display card */
+    .mood-card {
+      background: var(--card);
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+      transition: all 0.5s ease;
+    }
+
+    .weather-icon {
+      font-size: 5rem;
+      margin-bottom: 16px;
+      display: block;
+      /* little bounce animation */
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .weather-label {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--green);
+      margin-bottom: 8px;
+    }
+
+    .weather-message {
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+
+    /* Temperature display */
+    .temp-display {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+
+    .temp-display span {
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+
+    /* The slider that controls temperature */
+    .slider-wrap {
+      margin-bottom: 28px;
+    }
+
+    .slider-wrap label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--green);
+      height: 6px;
+      cursor: pointer;
+    }
+
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* Activity suggestions */
+    .activities {
+      background: var(--accent);
+      border-radius: 10px;
+      padding: 18px 20px;
+      text-align: left;
+    }
+
+    .activities h3 {
+      font-size: 0.82rem;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .activity-item {
+      font-size: 0.88rem;
+      color: var(--text);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Background changes based on mood */
+    body.sunny { --sky: #1a1200; --card: #2a1f00; }
+    body.warm  { --sky: #1a0a00; --card: #2a1200; }
+    body.cold  { --sky: #001a2a; --card: #00121e; }
+    body.cool  { --sky: #0a0f1a; --card: #0f1830; }
+    body.rain  { --sky: #0a0a14; --card: #10101e; }
+
+    /* Responsive */
+    @media (max-width: 500px) {
+      .mood-card { padding: 28px 20px; }
+      .temp-display { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌍 Musanze Weather Mood</h1>
+  <p class="subtitle">Drag the slider — see what the weather feels like in Musanze, Rwanda</p>
+
+  <div class="mood-card" id="moodCard">
+    <span class="weather-icon" id="weatherIcon">🌤️</span>
+    <div class="weather-label" id="weatherLabel">Loading...</div>
+    <div class="weather-message" id="weatherMessage">Move the slider to get started.</div>
+
+    <div class="temp-display" id="tempDisplay">
+      20 <span>°C</span>
+    </div>
+
+    <div class="slider-wrap">
+      <label>Adjust Temperature</label>
+      <input type="range" id="tempSlider" min="0" max="40" value="20" />
+      <div class="range-labels">
+        <span>0°C – Freezing</span>
+        <span>40°C – Scorching</span>
+      </div>
+    </div>
+
+    <div class="activities">
+      <h3>🎯 Suggested Activities in Musanze</h3>
+      <div id="activityList">
+        <div class="activity-item">🔄 Move the slider to see suggestions</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // All weather moods defined here
+    // Each one has: temp range, icon, label, message, activities, and body class
+    var moods = [
+      {
+        min: 0,
+        max: 8,
+        icon: '🥶',
+        label: 'Freezing Cold!',
+        message: 'Unusually cold for Musanze! Wrap up — even Volcanoes NP feels icy today.',
+        bodyClass: 'cold',
+        activities: ['🧥 Stay indoors and study', '☕ Hot tea or coffee time', '📚 Read a good book', '🔥 Find a warm fireplace']
+      },
+      {
+        min: 9,
+        max: 15,
+        icon: '🌧️',
+        label: 'Chilly & Rainy',
+        message: 'Classic Musanze highlands weather — carry your umbrella, always.',
+        bodyClass: 'rain',
+        activities: ['☂️ Umbrella is a must today', '🏠 Great day to code indoors', '🍵 Warm soup weather', '🎵 Play music and relax']
+      },
+      {
+        min: 16,
+        max: 21,
+        icon: '🌤️',
+        label: 'Cool & Pleasant',
+        message: 'Perfect Rwanda highlands morning. Crisp air, beautiful views of the volcanoes.',
+        bodyClass: 'cool',
+        activities: ['🚶 Morning walk to Musanze town', '🏔️ Visit Volcanoes National Park', '📸 Great light for photography', '🎓 Study in the fresh air']
+      },
+      {
+        min: 22,
+        max: 28,
+        icon: '☀️',
+        label: 'Warm & Sunny',
+        message: 'Beautiful day in Musanze! The volcanoes look stunning when the sky is clear.',
+        bodyClass: 'warm',
+        activities: ['🏔️ Gorilla trekking weather!', '🚴 Bike around Lake Ruhondo', '🌿 Twin Lakes visit', '☕ Outdoor café in town']
+      },
+      {
+        min: 29,
+        max: 40,
+        icon: '🔥',
+        label: 'Very Hot!',
+        message: 'Rare for Musanze — this is more like Kigali heat! Stay hydrated.',
+        bodyClass: 'sunny',
+        activities: ['💧 Drink lots of water', '🏊 Find shade or a pool', '🌴 Rest during peak hours', '🧃 Fresh juice break']
+      }
+    ];
+
+    var slider = document.getElementById('tempSlider');
+    var icon = document.getElementById('weatherIcon');
+    var label = document.getElementById('weatherLabel');
+    var message = document.getElementById('weatherMessage');
+    var tempDisplay = document.getElementById('tempDisplay');
+    var activityList = document.getElementById('activityList');
+
+    // This runs every time someone moves the slider
+    function updateMood() {
+      var temp = parseInt(slider.value);
+
+      // Update the temperature number shown
+      tempDisplay.innerHTML = temp + ' <span>°C</span>';
+
+      // Find which mood matches the current temperature
+      var currentMood = null;
+      for (var i = 0; i < moods.length; i++) {
+        if (temp >= moods[i].min && temp <= moods[i].max) {
+          currentMood = moods[i];
+          break;
+        }
+      }
+
+      if (!currentMood) return;
+
+      // Update the UI with the matching mood
+      icon.textContent = currentMood.icon;
+      label.textContent = currentMood.label;
+      message.textContent = currentMood.message;
+
+      // Remove all old body classes then add the new one
+      document.body.className = currentMood.bodyClass;
+
+      // Build the activity list using DOM
+      activityList.innerHTML = '';
+      for (var j = 0; j < currentMood.activities.length; j++) {
+        var div = document.createElement('div');
+        div.className = 'activity-item';
+        div.textContent = currentMood.activities[j];
+        activityList.appendChild(div);
+      }
+    }
+
+    // Listen for slider movement
+    slider.addEventListener('input', updateMood);
+
+    // Run once when page loads so it is not empty
+    updateMood();
+  </script>
+
+</body>
+</html>
